@@ -11,8 +11,5 @@
       "src": "/(.*)",
       "dest": "server.js"
     }
-  ],
-  "env": {
-    "PERPLEXITY_API_KEY": "@perplexity_api_key"
-  }
+  ]
 }
