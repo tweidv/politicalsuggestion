@@ -8,7 +8,7 @@ import { SliderConfig } from "@/lib/api"
 interface SmartSliderProps {
   value: number[]
   onValueChange: (value: number[]) => void
-  config: SliderConfig & { expectedDataType?: string }
+  config: SliderConfig & { displayFormat?: string; unit?: string }
   className?: string
 }
 
@@ -17,31 +17,41 @@ const SmartSlider = React.forwardRef<
   SmartSliderProps
 >(({ className, value, onValueChange, config, ...props }, ref) => {
   const formatValue = (val: number) => {
-    if (config.expectedDataType === 'date' || config.expectedDataType === 'year') {
-      return Math.round(val).toString()
-    } else if (config.expectedDataType === 'percentage') {
-      return `${val.toFixed(0)}%`
-    } else if (config.expectedDataType === 'currency') {
-      return `$${val.toFixed(0)}`
-    } else if (config.expectedDataType === 'temperature') {
-      return `${val.toFixed(0)}°${config.unit || 'C'}`
-    } else if (config.expectedDataType === 'population') {
-      if (val >= 1000000000) {
-        return `${Math.round(val / 1000000000)} B`
-      } else if (val >= 1000000) {
-        return `${Math.round(val / 1000000)} M`
-      } else if (val >= 1000) {
-        return `${Math.round(val / 1000)} K`
-      }
-      return val.toFixed(0)
-    }
+    const displayFormat = config.displayFormat || 'count'
+    const unit = config.unit || ''
     
-    // Default formatting
-    if (config.unit) {
-      return `${Math.round(val)} ${config.unit}`
+    switch (displayFormat) {
+      case 'percentage':
+        return `${val.toFixed(0)}%`
+      case 'currency':
+        return `$${val.toLocaleString()}${unit}`
+      case 'year':
+        return Math.round(val).toString()
+      case 'population':
+        if (val >= 1000000000) {
+          return `${(val / 1000000000).toFixed(1)}B`
+        } else if (val >= 1000000) {
+          return `${(val / 1000000).toFixed(1)}M`
+        } else if (val >= 1000) {
+          return `${(val / 1000).toFixed(1)}K`
+        }
+        return val.toFixed(0)
+      case 'temperature':
+        return `${val.toFixed(0)}°${unit}`
+      case 'large_number':
+        if (val >= 1000000000) {
+          return `${(val / 1000000000).toFixed(1)}B`
+        } else if (val >= 1000000) {
+          return `${(val / 1000000).toFixed(1)}M`
+        }
+        return val.toLocaleString()
+      case 'count':
+      default:
+        if (unit) {
+          return `${Math.round(val)} ${unit}`
+        }
+        return Math.round(val).toString()
     }
-    
-    return Math.round(val).toString()
   }
 
   const currentValue = value[0] || config.min

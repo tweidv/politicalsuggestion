@@ -161,7 +161,7 @@ export default function ResultPage() {
                       <div className="font-bold">
                         {formatValueForDisplay(perception.userGuessValue, {
                           question: perception.questionText,
-                          expectedDataType: perception.expectedDataType,
+                          displayFormat: perception.displayFormat,
                           sliderConfig: perception.sliderConfig
                         })}
                       </div>
@@ -171,7 +171,7 @@ export default function ResultPage() {
                       <div className="font-bold">
                         {formatValueForDisplay(perception.actualValue, {
                           question: perception.questionText,
-                          expectedDataType: perception.expectedDataType,
+                          displayFormat: perception.displayFormat,
                           sliderConfig: perception.sliderConfig
                         })}
                       </div>

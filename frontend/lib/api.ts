@@ -16,9 +16,10 @@ export interface Question {
   question: string
   category: string
   actualValue: number
+  unit?: string
   sources: Array<{ name: string; url: string }>
   confidence: string
-  expectedDataType: string
+  displayFormat?: string
   sliderConfig: SliderConfig
 }
 
@@ -34,7 +35,7 @@ export interface Perception {
   actualValue: number
   timeToGuess: number
   questionText: string
-  expectedDataType?: string
+  displayFormat?: string
   sliderConfig?: SliderConfig
 }
 

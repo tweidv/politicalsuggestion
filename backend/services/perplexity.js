@@ -45,33 +45,42 @@ class PerplexityService {
   }
 
   async generateQuestions(topic) {
-    const prompt = `For the discussion about '${topic}', generate 5 statistics that test core, relevant, quantifiable knowledge in this area. Frame each as a question. Focus on factual, measurable data that someone could reasonably know or guess. Return as JSON array with this structure:
-    [
-      {
-        "question": "What is the question text?",
-        "category": "brief category description",
-        "expectedDataType": "percentage|number|date|year|currency|temperature|population",
-        "sliderConfig": {
-          "min": 0,
-          "max": 100,
-          "step": 1,
-          "unit": "%",
-          "labels": {
-            "min": "0%",
-            "max": "100%"
-          }
-        }
-      }
-    ]
+    const prompt = `For the discussion about '${topic}', generate 5 statistics that test core, relevant, quantifiable knowledge in this area. Frame each as a question. Focus on factual, measurable data that someone could reasonably know or guess. 
 
-    For sliderConfig, choose appropriate ranges and units:
-    - For percentages: min=0, max=100, unit="%"
-    - For years: min=1900, max=2030, unit=""
-    - For dates: min=1900, max=2030, unit="", labels as years
-    - For large numbers (millions/billions): appropriate range, unit="M" or "B"
-    - For currency: appropriate range, unit="$"
-    - For temperatures: appropriate range, unit="°C" or "°F"
-    - For populations: appropriate range, unit="people"`;
+Return as JSON array with this structure:
+[
+  {
+    "question": "What is the question text?",
+    "category": "brief category description",
+    "actualValue": 42.5,
+    "unit": "%",
+    "displayFormat": "percentage",
+    "sliderConfig": {
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "labels": {
+        "min": "0%",
+        "max": "100%"
+      }
+    }
+  }
+]
+
+IMPORTANT FORMATTING RULES:
+- actualValue: The real numerical answer (without units, just the number)
+- unit: The unit symbol ("%", "$", "people", "years", "°C", "°F", "M", "B", etc.)
+- displayFormat: Choose from "percentage", "currency", "population", "year", "count", "temperature", "large_number"
+- Set realistic slider ranges based on the actual value (actual value should be within the range)
+- Make displayLabels user-friendly (e.g., "1.5M" instead of "1500000")
+
+FORMATTING EXAMPLES:
+- Percentage: actualValue: 78, unit: "%", displayFormat: "percentage", slider: 0-100
+- Currency: actualValue: 648.1, unit: "B", displayFormat: "currency", slider: 0-1000B  
+- Population: actualValue: 8200000000, unit: "people", displayFormat: "population", slider: 7B-9B
+- Year: actualValue: 2024, unit: "years", displayFormat: "year", slider: 2020-2030
+- Count: actualValue: 948, unit: "", displayFormat: "count", slider: 0-1000
+- Temperature: actualValue: 25, unit: "°C", displayFormat: "temperature", slider: -40-50°C`;
 
     console.log('Generating questions for topic:', topic);
     
@@ -95,32 +104,42 @@ class PerplexityService {
         { 
           question: "What percentage of...?", 
           category: "statistics",
-          expectedDataType: "percentage",
-          sliderConfig: { min: 0, max: 100, step: 1, unit: "%", labels: { min: "0%", max: "100%" } }
+          actualValue: 50,
+          unit: "%",
+          displayFormat: "percentage",
+          sliderConfig: { min: 0, max: 100, step: 1, labels: { min: "0%", max: "100%" } }
         },
         { 
           question: "How many...?", 
           category: "quantities",
-          expectedDataType: "number",
-          sliderConfig: { min: 0, max: 1000, step: 1, unit: "", labels: { min: "0", max: "1000" } }
+          actualValue: 500,
+          unit: "",
+          displayFormat: "count",
+          sliderConfig: { min: 0, max: 1000, step: 1, labels: { min: "0", max: "1000" } }
         },
         { 
           question: "What is the current...?", 
           category: "current data",
-          expectedDataType: "number",
-          sliderConfig: { min: 0, max: 100, step: 1, unit: "", labels: { min: "0", max: "100" } }
+          actualValue: 50,
+          unit: "",
+          displayFormat: "count",
+          sliderConfig: { min: 0, max: 100, step: 1, labels: { min: "0", max: "100" } }
         },
         { 
           question: "How much does... cost?", 
           category: "economics",
-          expectedDataType: "currency",
-          sliderConfig: { min: 0, max: 1000, step: 1, unit: "$", labels: { min: "$0", max: "$1000" } }
+          actualValue: 500,
+          unit: "$",
+          displayFormat: "currency",
+          sliderConfig: { min: 0, max: 1000, step: 1, labels: { min: "$0", max: "$1000" } }
         },
         { 
           question: "What year did... happen?", 
           category: "timeline",
-          expectedDataType: "year",
-          sliderConfig: { min: 1900, max: 2030, step: 1, unit: "", labels: { min: "1900", max: "2030" } }
+          actualValue: 2020,
+          unit: "years",
+          displayFormat: "year",
+          sliderConfig: { min: 1900, max: 2030, step: 1, labels: { min: "1900", max: "2030" } }
         }
       ];
     }

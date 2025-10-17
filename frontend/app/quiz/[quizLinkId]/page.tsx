@@ -211,7 +211,7 @@ export default function QuizPage() {
                   <div className="text-center">
                     <label className="text-lg font-medium">Your guess:</label>
                     <div className="text-2xl font-bold text-primary mt-2">
-                      {formatSliderValue(quizState.userGuess, getSmartSliderConfig(currentQuestion), currentQuestion.expectedDataType)}
+                      {formatSliderValue(quizState.userGuess, getSmartSliderConfig(currentQuestion), currentQuestion.displayFormat)}
                     </div>
                   </div>
                   
@@ -220,7 +220,8 @@ export default function QuizPage() {
                     onValueChange={(value) => setQuizState(prev => ({ ...prev, userGuess: value[0] }))}
                     config={{
                       ...getSmartSliderConfig(currentQuestion),
-                      expectedDataType: currentQuestion.expectedDataType || 'number'
+                      displayFormat: currentQuestion.displayFormat || 'count',
+                      unit: currentQuestion.unit
                     }}
                     className="w-full"
                   />
@@ -243,7 +244,7 @@ export default function QuizPage() {
                       {formatSliderValue(
                         quizState.perceptions[quizState.perceptions.length - 1]?.userGuessValue || 0,
                         getSmartSliderConfig(currentQuestion),
-                        currentQuestion.expectedDataType
+                        currentQuestion.displayFormat
                       )}
                     </div>
                   </div>
@@ -253,7 +254,7 @@ export default function QuizPage() {
                       {formatSliderValue(
                         currentQuestion.actualValue,
                         getSmartSliderConfig(currentQuestion),
-                        currentQuestion.expectedDataType
+                        currentQuestion.displayFormat
                       )}
                     </div>
                   </div>

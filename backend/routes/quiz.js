@@ -67,52 +67,54 @@ router.post('/generate', async (req, res) => {
       throw new Error(`Failed to generate questions: ${error.message}`);
     }
     
-    // Fact-check each question
-    console.log('Fact-checking', questionsData.length, 'questions...');
+    // Process questions - now Perplexity provides complete formatting metadata
+    console.log('Processing', questionsData.length, 'questions with formatting metadata...');
     const questionsWithAnswers = [];
     
     for (let i = 0; i < questionsData.length; i++) {
       const questionData = questionsData[i];
       
+      // Use Perplexity's formatting metadata directly, with fact-checking as backup
       try {
         const factCheck = await perplexityService.factCheck(questionData.question);
+        
+        // Use fact-checked value if available, otherwise use Perplexity's initial value
+        const finalActualValue = factCheck.numericalValue || questionData.actualValue || 1;
         
         questionsWithAnswers.push({
           id: uuidv4(),
           question: questionData.question,
           category: questionData.category,
-          actualValue: factCheck.numericalValue || 1,
-          unit: factCheck.unit || '',
+          actualValue: finalActualValue,
+          unit: questionData.unit || factCheck.unit || '',
           answerText: factCheck.answerText || 'Data not available',
           sources: factCheck.sources || [{ name: "Error", url: "N/A" }],
           confidence: factCheck.confidence || 'low',
-          expectedDataType: questionData.expectedDataType || 'number',
+          displayFormat: questionData.displayFormat || 'count',
           sliderConfig: questionData.sliderConfig || {
             min: 0,
             max: 100,
             step: 1,
-            unit: factCheck.unit || '',
             labels: { min: '0', max: '100' }
           }
         });
       } catch (error) {
-        console.error(`ERROR fact-checking question ${i + 1}:`, error);
-        // Continue with other questions even if one fails
+        console.error(`ERROR processing question ${i + 1}:`, error);
+        // Use Perplexity's metadata as fallback
         questionsWithAnswers.push({
           id: uuidv4(),
           question: questionData.question,
           category: questionData.category,
-          actualValue: 1, // Default value
-          unit: '',
+          actualValue: questionData.actualValue || 1,
+          unit: questionData.unit || '',
           answerText: 'Data not available',
           sources: [{ name: "Error", url: "N/A" }],
           confidence: "low",
-          expectedDataType: questionData.expectedDataType || 'number',
+          displayFormat: questionData.displayFormat || 'count',
           sliderConfig: questionData.sliderConfig || {
             min: 0,
             max: 100,
             step: 1,
-            unit: '',
             labels: { min: '0', max: '100' }
           }
         });
