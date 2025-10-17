@@ -248,3 +248,11 @@ export function formatSliderValue(value: number, config: SliderConfig, expectedD
   
   return Math.round(value).toString()
 }
+
+export function formatValueForDisplay(
+  value: number, 
+  question: { question: string; expectedDataType?: string; sliderConfig?: SliderConfig }
+): string {
+  const config = question.sliderConfig || getSmartSliderConfig(question)
+  return formatSliderValue(value, config, question.expectedDataType)
+}

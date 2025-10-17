@@ -92,7 +92,9 @@ export default function QuizPage() {
       userGuessValue: quizState.userGuess,
       actualValue: currentQuestion.actualValue,
       timeToGuess,
-      questionText: currentQuestion.question
+      questionText: currentQuestion.question,
+      expectedDataType: currentQuestion.expectedDataType,
+      sliderConfig: currentQuestion.sliderConfig
     }
 
     setQuizState(prev => ({

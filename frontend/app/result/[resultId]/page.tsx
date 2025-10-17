@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { getResult, getQuiz, type Perception } from '@/lib/api'
+import { formatValueForDisplay } from '@/lib/slider-utils'
 
 interface ResultData {
   resultId: string
@@ -157,11 +158,23 @@ export default function ResultPage() {
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <div className="text-muted-foreground">Your Guess</div>
-                      <div className="font-bold">{perception.userGuessValue}</div>
+                      <div className="font-bold">
+                        {formatValueForDisplay(perception.userGuessValue, {
+                          question: perception.questionText,
+                          expectedDataType: perception.expectedDataType,
+                          sliderConfig: perception.sliderConfig
+                        })}
+                      </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Actual Value</div>
-                      <div className="font-bold">{perception.actualValue}</div>
+                      <div className="font-bold">
+                        {formatValueForDisplay(perception.actualValue, {
+                          question: perception.questionText,
+                          expectedDataType: perception.expectedDataType,
+                          sliderConfig: perception.sliderConfig
+                        })}
+                      </div>
                     </div>
                     <div>
                       <div className="text-muted-foreground">Accuracy</div>

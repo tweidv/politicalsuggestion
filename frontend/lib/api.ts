@@ -34,6 +34,8 @@ export interface Perception {
   actualValue: number
   timeToGuess: number
   questionText: string
+  expectedDataType?: string
+  sliderConfig?: SliderConfig
 }
 
 export interface QuizResult {

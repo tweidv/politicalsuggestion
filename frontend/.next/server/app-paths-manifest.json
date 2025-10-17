@@ -1,6 +1,5 @@
 {
-  "/quiz/[quizLinkId]/page": "app/quiz/[quizLinkId]/page.js",
-  "/result/[resultId]/page": "app/result/[resultId]/page.js",
   "/page": "app/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js"
+  "/quiz/[quizLinkId]/page": "app/quiz/[quizLinkId]/page.js",
+  "/result/[resultId]/page": "app/result/[resultId]/page.js"
 }
