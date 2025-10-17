@@ -102,3 +102,20 @@ export async function getResult(resultId: string) {
 
   return response.json()
 }
+
+export interface QuizSummary {
+  quizLinkId: string
+  topicName: string
+  topicUrl: string
+  createdAt: string
+}
+
+export async function getAllQuizzes(): Promise<QuizSummary[]> {
+  const response = await fetch(`${API_BASE_URL}/quiz`)
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch quizzes')
+  }
+
+  return response.json()
+}

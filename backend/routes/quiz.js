@@ -4,6 +4,26 @@ const { v4: uuidv4 } = require('uuid');
 const perplexityService = require('../services/perplexity');
 const csvStorage = require('../services/csvStorage');
 
+// GET /api/quiz - Get all quizzes
+router.get('/', async (req, res) => {
+  try {
+    const quizzes = await csvStorage.getAllQuizzes();
+    
+    // Transform the data to match the expected format
+    const transformedQuizzes = quizzes.map(quiz => ({
+      quizLinkId: quiz['Quiz Link ID'],
+      topicName: quiz['Topic Name'],
+      topicUrl: quiz['Topic URL'],
+      createdAt: quiz['Created At']
+    }));
+
+    res.json(transformedQuizzes);
+  } catch (error) {
+    console.error('Error fetching quizzes:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/quiz/:quizLinkId - Get quiz by ID
 router.get('/:quizLinkId', async (req, res) => {
   try {

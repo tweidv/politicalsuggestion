@@ -59,34 +59,17 @@ export default function ResultPage() {
   }
 
   const shareResult = async () => {
-    const shareText = `My Personal Knowledge Index (PKI) is ${result?.pkiScore}%. Challenge the facts and see if you know more about ${quiz?.topicName}!`
-    const shareUrl = window.location.href
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Really? - My PKI Score',
-          text: shareText,
-          url: shareUrl
-        })
-      } catch (err) {
-        // Fallback to clipboard
-        copyToClipboard(shareText, shareUrl)
-      }
-    } else {
-      copyToClipboard(shareText, shareUrl)
-    }
-  }
-
-  const copyToClipboard = async (text: string, url: string) => {
+    const quizUrl = `${window.location.origin}/quiz/${result?.quizLinkId}`
+    
     try {
-      await navigator.clipboard.writeText(`${text}\n${url}`)
+      await navigator.clipboard.writeText(quizUrl)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error('Failed to copy to clipboard:', err)
     }
   }
+
 
   if (loading) {
     return (
@@ -128,10 +111,15 @@ export default function ResultPage() {
           </CardHeader>
         </Card>
 
-        {/* PKI Score */}
+        {/* Score */}
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Personal Knowledge Index</CardTitle>
+            <div className="flex items-center justify-center gap-4">
+              <CardTitle className="text-2xl">Score</CardTitle>
+              <Button onClick={shareResult} size="sm" variant="outline">
+                {copied ? 'Copied!' : 'Share'}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <div className={`text-6xl font-bold ${getScoreColor(result.pkiScore)}`}>
@@ -188,22 +176,6 @@ export default function ResultPage() {
           </CardContent>
         </Card>
 
-        {/* Share Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Share Your Results</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center space-y-4">
-              <Button onClick={shareResult} size="lg" className="w-full">
-                {copied ? 'Copied to Clipboard!' : 'Share Your PKI Score'}
-              </Button>
-              <div className="text-sm text-muted-foreground">
-                Challenge your friends to see who knows more!
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center">
