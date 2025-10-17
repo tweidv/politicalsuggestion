@@ -127,15 +127,29 @@ class PerplexityService {
   }
 
   async factCheck(question) {
-    const prompt = `Find the most accurate, current answer to this question: "${question}". Provide the specific numerical value or fact, along with 3-5 authoritative sources. Return as JSON:
-    {
-      "answer": "the specific answer",
-      "sources": [
-        {"name": "Source Name", "url": "source_url"},
-        {"name": "Source Name", "url": "source_url"}
-      ],
-      "confidence": "high/medium/low"
-    }`;
+    const prompt = `Find the most accurate, current answer to this question: "${question}". 
+
+IMPORTANT: Return ONLY a JSON object with this exact structure. Do not include any other text, explanations, or formatting outside the JSON:
+
+{
+  "numericalValue": 42.5,
+  "unit": "%",
+  "answerText": "The unemployment rate is 42.5%",
+  "sources": [
+    {"name": "Bureau of Labor Statistics", "url": "https://bls.gov"},
+    {"name": "Federal Reserve Economic Data", "url": "https://fred.stlouisfed.org"}
+  ],
+  "confidence": "high"
+}
+
+Guidelines for the response:
+- numericalValue: Extract the main numerical answer as a number (not a string)
+- unit: The unit of measurement (%, $, people, years, etc.) or empty string if none
+- answerText: A brief, clear statement of the answer
+- sources: 2-3 authoritative sources with real URLs
+- confidence: "high", "medium", or "low" based on data quality and recency
+
+Focus on finding the most recent, authoritative data for this question.`;
 
     console.log('Fact-checking question:', question);
     
@@ -154,7 +168,9 @@ class PerplexityService {
       console.error('Error parsing fact check:', error);
       console.error('Response that failed to parse:', response);
       return {
-        answer: "Data not available",
+        numericalValue: 1,
+        unit: "",
+        answerText: "Data not available",
         sources: [{ name: "Perplexity Search", url: "https://perplexity.ai" }],
         confidence: "low"
       };

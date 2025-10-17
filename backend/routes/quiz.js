@@ -76,21 +76,22 @@ router.post('/generate', async (req, res) => {
       
       try {
         const factCheck = await perplexityService.factCheck(questionData.question);
-        const parsedValue = parseAnswer(factCheck.answer);
         
         questionsWithAnswers.push({
           id: uuidv4(),
           question: questionData.question,
           category: questionData.category,
-          actualValue: parsedValue,
-          sources: factCheck.sources,
-          confidence: factCheck.confidence,
+          actualValue: factCheck.numericalValue || 1,
+          unit: factCheck.unit || '',
+          answerText: factCheck.answerText || 'Data not available',
+          sources: factCheck.sources || [{ name: "Error", url: "N/A" }],
+          confidence: factCheck.confidence || 'low',
           expectedDataType: questionData.expectedDataType || 'number',
           sliderConfig: questionData.sliderConfig || {
             min: 0,
             max: 100,
             step: 1,
-            unit: '',
+            unit: factCheck.unit || '',
             labels: { min: '0', max: '100' }
           }
         });
@@ -102,6 +103,8 @@ router.post('/generate', async (req, res) => {
           question: questionData.question,
           category: questionData.category,
           actualValue: 1, // Default value
+          unit: '',
+          answerText: 'Data not available',
           sources: [{ name: "Error", url: "N/A" }],
           confidence: "low",
           expectedDataType: questionData.expectedDataType || 'number',
@@ -146,158 +149,5 @@ router.post('/generate', async (req, res) => {
   }
 });
 
-// Helper function to parse answers into numbers
-const parseAnswer = (answer) => {
-  if (!answer || typeof answer !== 'string') {
-    return 1;
-  }
-
-  const lowerAnswer = answer.toLowerCase();
-  
-  // Remove common prefixes that might contain years or irrelevant numbers
-  const cleanedAnswer = lowerAnswer
-    .replace(/^(according to|based on|as of|in \d{4}|since \d{4}|from \d{4}|during \d{4})/i, '')
-    .replace(/\b(19|20)\d{2}\b/g, '') // Remove years
-    .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{1,2},?\s+\d{4}\b/g, '') // Remove dates
-    .trim();
-
-  // Look for percentage patterns first (most common)
-  const percentageMatch = cleanedAnswer.match(/(\d+(?:\.\d+)?)\s*%/);
-  if (percentageMatch) {
-    return parseFloat(percentageMatch[1]);
-  }
-
-  // Look for "is" or "are" patterns that indicate the main answer
-  const isPattern = cleanedAnswer.match(/(?:is|are|was|were|stands at|reaches|amounts to|equals?)\s*(\d+(?:\.\d+)?)/);
-  if (isPattern) {
-    const value = parseFloat(isPattern[1]);
-    // Check if it's followed by million/billion/trillion
-    const afterValue = cleanedAnswer.substring(isPattern.index + isPattern[0].length);
-    if (afterValue.includes('million')) {
-      return value * 1000000;
-    }
-    if (afterValue.includes('billion')) {
-      return value * 1000000000;
-    }
-    if (afterValue.includes('trillion')) {
-      return value * 1000000000000;
-    }
-    if (afterValue.includes('thousand') || afterValue.includes('k')) {
-      return value * 1000;
-    }
-    return value;
-  }
-
-  // Look for "approximately", "about", "around" patterns
-  const approxPattern = cleanedAnswer.match(/(?:approximately|about|around|roughly|nearly|close to)\s*(\d+(?:\.\d+)?)/);
-  if (approxPattern) {
-    const value = parseFloat(approxPattern[1]);
-    const afterValue = cleanedAnswer.substring(approxPattern.index + approxPattern[0].length);
-    if (afterValue.includes('million')) {
-      return value * 1000000;
-    }
-    if (afterValue.includes('billion')) {
-      return value * 1000000000;
-    }
-    if (afterValue.includes('trillion')) {
-      return value * 1000000000000;
-    }
-    if (afterValue.includes('thousand') || afterValue.includes('k')) {
-      return value * 1000;
-    }
-    return value;
-  }
-
-  // Look for range patterns and take the middle
-  const rangePattern = cleanedAnswer.match(/(\d+(?:\.\d+)?)\s*(?:to|-|–|and)\s*(\d+(?:\.\d+)?)/);
-  if (rangePattern) {
-    const min = parseFloat(rangePattern[1]);
-    const max = parseFloat(rangePattern[2]);
-    const middle = (min + max) / 2;
-    
-    const afterValue = cleanedAnswer.substring(rangePattern.index + rangePattern[0].length);
-    if (afterValue.includes('million')) {
-      return middle * 1000000;
-    }
-    if (afterValue.includes('billion')) {
-      return middle * 1000000000;
-    }
-    if (afterValue.includes('trillion')) {
-      return middle * 1000000000000;
-    }
-    if (afterValue.includes('thousand') || afterValue.includes('k')) {
-      return middle * 1000;
-    }
-    return middle;
-  }
-
-  // Look for million/billion patterns
-  if (cleanedAnswer.includes('million')) {
-    const millionMatch = cleanedAnswer.match(/(\d+(?:\.\d+)?)\s*million/);
-    if (millionMatch) {
-      return parseFloat(millionMatch[1]) * 1000000;
-    }
-  }
-  
-  if (cleanedAnswer.includes('billion')) {
-    const billionMatch = cleanedAnswer.match(/(\d+(?:\.\d+)?)\s*billion/);
-    if (billionMatch) {
-      return parseFloat(billionMatch[1]) * 1000000000;
-    }
-  }
-
-  if (cleanedAnswer.includes('trillion')) {
-    const trillionMatch = cleanedAnswer.match(/(\d+(?:\.\d+)?)\s*trillion/);
-    if (trillionMatch) {
-      return parseFloat(trillionMatch[1]) * 1000000000000;
-    }
-  }
-
-  if (cleanedAnswer.includes('thousand') || cleanedAnswer.includes('k')) {
-    const thousandMatch = cleanedAnswer.match(/(\d+(?:\.\d+)?)\s*(?:thousand|k)/);
-    if (thousandMatch) {
-      return parseFloat(thousandMatch[1]) * 1000;
-    }
-  }
-
-  // Look for currency patterns
-  const currencyMatch = cleanedAnswer.match(/\$(\d+(?:\.\d+)?)\s*(?:million|billion|trillion|thousand|k)?/);
-  if (currencyMatch) {
-    const value = parseFloat(currencyMatch[1]);
-    const afterValue = cleanedAnswer.substring(currencyMatch.index + currencyMatch[0].length);
-    if (afterValue.includes('million')) {
-      return value * 1000000;
-    }
-    if (afterValue.includes('billion')) {
-      return value * 1000000000;
-    }
-    if (afterValue.includes('trillion')) {
-      return value * 1000000000000;
-    }
-    if (afterValue.includes('thousand') || afterValue.includes('k')) {
-      return value * 1000;
-    }
-    return value;
-  }
-
-  // Look for any remaining number that's not a year
-  const numberMatch = cleanedAnswer.match(/(\d+(?:\.\d+)?)/);
-  if (numberMatch) {
-    const value = parseFloat(numberMatch[1]);
-    // Avoid years (1900-2100)
-    if (value >= 1900 && value <= 2100) {
-      // Skip this number and look for the next one
-      const remaining = cleanedAnswer.substring(numberMatch.index + numberMatch[0].length);
-      const nextNumberMatch = remaining.match(/(\d+(?:\.\d+)?)/);
-      if (nextNumberMatch) {
-        return parseFloat(nextNumberMatch[1]);
-      }
-    }
-    return value;
-  }
-  
-  // Default to 1 if we can't parse anything
-  return 1;
-};
 
 module.exports = router;
