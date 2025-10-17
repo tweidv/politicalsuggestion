@@ -20,6 +20,7 @@ export interface Question {
   sources: Array<{ name: string; url: string }>
   confidence: string
   displayFormat?: string
+  expectedDataType?: string
   sliderConfig: SliderConfig
 }
 
