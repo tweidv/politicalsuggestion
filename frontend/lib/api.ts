@@ -36,6 +36,7 @@ export interface Perception {
   timeToGuess: number
   questionText: string
   displayFormat?: string
+  expectedDataType?: string
   sliderConfig?: SliderConfig
 }
 
