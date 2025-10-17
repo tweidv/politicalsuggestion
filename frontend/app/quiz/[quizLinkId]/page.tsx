@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Slider } from '@/components/ui/slider'
+import { SmartSlider } from '@/components/ui/smart-slider'
 import { Progress } from '@/components/ui/progress'
 import { getQuiz, submitResults, type Question, type Perception } from '@/lib/api'
+import { getSmartSliderConfig, formatSliderValue } from '@/lib/slider-utils'
 import { v4 as uuidv4 } from 'uuid'
 
 interface QuizState {
@@ -60,6 +61,17 @@ export default function QuizPage() {
     try {
       const quizData = await getQuiz(quizLinkId)
       setQuiz(quizData)
+      // Auto-start the first question
+      if (quizData && quizData.questions.length > 0) {
+        const firstQuestion = quizData.questions[0]
+        const sliderConfig = getSmartSliderConfig(firstQuestion)
+        setQuizState(prev => ({
+          ...prev,
+          userGuess: sliderConfig.min + (sliderConfig.max - sliderConfig.min) / 2,
+          timerActive: true,
+          timeRemaining: 5
+        }))
+      }
     } catch (err) {
       setError('Failed to load quiz')
       console.error('Error loading quiz:', err)
@@ -68,15 +80,6 @@ export default function QuizPage() {
     }
   }
 
-  const startQuestion = () => {
-    setQuizState(prev => ({
-      ...prev,
-      timerActive: true,
-      timeRemaining: 5,
-      showingAnswer: false,
-      userGuess: 50
-    }))
-  }
 
   const handleAnswerSubmit = () => {
     if (!quiz) return
@@ -109,13 +112,15 @@ export default function QuizPage() {
       // Quiz complete, submit results
       submitQuizResults()
     } else {
+      const nextQuestion = quiz.questions[nextIndex]
+      const sliderConfig = getSmartSliderConfig(nextQuestion)
       setQuizState(prev => ({
         ...prev,
         currentQuestionIndex: nextIndex,
         timeRemaining: 5,
-        timerActive: false,
+        timerActive: true, // Auto-start the next question
         showingAnswer: false,
-        userGuess: 50
+        userGuess: sliderConfig.min + (sliderConfig.max - sliderConfig.min) / 2
       }))
     }
   }
@@ -190,16 +195,6 @@ export default function QuizPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            {!quizState.timerActive && !quizState.showingAnswer && (
-              <div className="text-center">
-                <Button onClick={startQuestion} size="lg">
-                  Start Question
-                </Button>
-                <p className="text-sm text-muted-foreground mt-2">
-                  You'll have 5 seconds to answer
-                </p>
-              </div>
-            )}
 
             {quizState.timerActive && (
               <div className="space-y-4">
@@ -214,23 +209,19 @@ export default function QuizPage() {
                   <div className="text-center">
                     <label className="text-lg font-medium">Your guess:</label>
                     <div className="text-2xl font-bold text-primary mt-2">
-                      {quizState.userGuess}
+                      {formatSliderValue(quizState.userGuess, getSmartSliderConfig(currentQuestion), currentQuestion.expectedDataType)}
                     </div>
                   </div>
                   
-                  <Slider
+                  <SmartSlider
                     value={[quizState.userGuess]}
                     onValueChange={(value) => setQuizState(prev => ({ ...prev, userGuess: value[0] }))}
-                    max={100}
-                    min={0}
-                    step={1}
+                    config={{
+                      ...getSmartSliderConfig(currentQuestion),
+                      expectedDataType: currentQuestion.expectedDataType || 'number'
+                    }}
                     className="w-full"
                   />
-                  
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>0</span>
-                    <span>100</span>
-                  </div>
                 </div>
 
                 <div className="text-center">
@@ -247,13 +238,21 @@ export default function QuizPage() {
                   <div className="text-center p-4 bg-secondary rounded-lg">
                     <div className="text-sm text-muted-foreground">Your Guess</div>
                     <div className="text-2xl font-bold text-primary">
-                      {quizState.perceptions[quizState.perceptions.length - 1]?.userGuessValue}
+                      {formatSliderValue(
+                        quizState.perceptions[quizState.perceptions.length - 1]?.userGuessValue || 0,
+                        getSmartSliderConfig(currentQuestion),
+                        currentQuestion.expectedDataType
+                      )}
                     </div>
                   </div>
                   <div className="text-center p-4 bg-primary/10 rounded-lg">
                     <div className="text-sm text-muted-foreground">Actual Value</div>
                     <div className="text-2xl font-bold text-primary">
-                      {currentQuestion.actualValue}
+                      {formatSliderValue(
+                        currentQuestion.actualValue,
+                        getSmartSliderConfig(currentQuestion),
+                        currentQuestion.expectedDataType
+                      )}
                     </div>
                   </div>
                 </div>

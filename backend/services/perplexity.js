@@ -49,28 +49,79 @@ class PerplexityService {
     [
       {
         "question": "What is the question text?",
-        "category": "brief category description"
+        "category": "brief category description",
+        "expectedDataType": "percentage|number|date|year|currency|temperature|population",
+        "sliderConfig": {
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "unit": "%",
+          "labels": {
+            "min": "0%",
+            "max": "100%"
+          }
+        }
       }
-    ]`;
+    ]
 
+    For sliderConfig, choose appropriate ranges and units:
+    - For percentages: min=0, max=100, unit="%"
+    - For years: min=1900, max=2030, unit=""
+    - For dates: min=1900, max=2030, unit="", labels as years
+    - For large numbers (millions/billions): appropriate range, unit="M" or "B"
+    - For currency: appropriate range, unit="$"
+    - For temperatures: appropriate range, unit="°C" or "°F"
+    - For populations: appropriate range, unit="people"`;
+
+    console.log('Generating questions for topic:', topic);
+    
     const response = await this.search(prompt);
     
     try {
       // Extract JSON from response
       const jsonMatch = response.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const jsonString = jsonMatch[0];
+        const parsed = JSON.parse(jsonString);
+        console.log('Successfully generated', parsed.length, 'questions');
+        return parsed;
       }
       throw new Error('No valid JSON found in response');
     } catch (error) {
       console.error('Error parsing questions:', error);
-      // Fallback: return basic questions
+      console.error('Response that failed to parse:', response);
+      // Fallback: return basic questions with default slider configs
       return [
-        { question: "What percentage of...?", category: "statistics" },
-        { question: "How many...?", category: "quantities" },
-        { question: "What is the current...?", category: "current data" },
-        { question: "How much does... cost?", category: "economics" },
-        { question: "What year did... happen?", category: "timeline" }
+        { 
+          question: "What percentage of...?", 
+          category: "statistics",
+          expectedDataType: "percentage",
+          sliderConfig: { min: 0, max: 100, step: 1, unit: "%", labels: { min: "0%", max: "100%" } }
+        },
+        { 
+          question: "How many...?", 
+          category: "quantities",
+          expectedDataType: "number",
+          sliderConfig: { min: 0, max: 1000, step: 1, unit: "", labels: { min: "0", max: "1000" } }
+        },
+        { 
+          question: "What is the current...?", 
+          category: "current data",
+          expectedDataType: "number",
+          sliderConfig: { min: 0, max: 100, step: 1, unit: "", labels: { min: "0", max: "100" } }
+        },
+        { 
+          question: "How much does... cost?", 
+          category: "economics",
+          expectedDataType: "currency",
+          sliderConfig: { min: 0, max: 1000, step: 1, unit: "$", labels: { min: "$0", max: "$1000" } }
+        },
+        { 
+          question: "What year did... happen?", 
+          category: "timeline",
+          expectedDataType: "year",
+          sliderConfig: { min: 1900, max: 2030, step: 1, unit: "", labels: { min: "1900", max: "2030" } }
+        }
       ];
     }
   }
@@ -86,16 +137,22 @@ class PerplexityService {
       "confidence": "high/medium/low"
     }`;
 
+    console.log('Fact-checking question:', question);
+    
     const response = await this.search(prompt);
     
     try {
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        const jsonString = jsonMatch[0];
+        const parsed = JSON.parse(jsonString);
+        console.log('Fact-check completed with confidence:', parsed.confidence);
+        return parsed;
       }
       throw new Error('No valid JSON found in response');
     } catch (error) {
       console.error('Error parsing fact check:', error);
+      console.error('Response that failed to parse:', response);
       return {
         answer: "Data not available",
         sources: [{ name: "Perplexity Search", url: "https://perplexity.ai" }],

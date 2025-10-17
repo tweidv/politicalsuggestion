@@ -39,27 +39,62 @@ router.post('/generate', async (req, res) => {
     }
 
     // Generate questions using Perplexity
-    console.log('Generating questions...');
-    const questionsData = await perplexityService.generateQuestions(topic);
-    console.log('Generated questions:', questionsData);
+    let questionsData;
+    try {
+      questionsData = await perplexityService.generateQuestions(topic);
+    } catch (error) {
+      console.error('ERROR in generateQuestions:', error);
+      throw new Error(`Failed to generate questions: ${error.message}`);
+    }
     
     // Fact-check each question
-    console.log('Fact-checking questions...');
-    const questionsWithAnswers = await Promise.all(
-      questionsData.map(async (questionData, index) => {
-        console.log(`Fact-checking question ${index + 1}:`, questionData.question);
+    console.log('Fact-checking', questionsData.length, 'questions...');
+    const questionsWithAnswers = [];
+    
+    for (let i = 0; i < questionsData.length; i++) {
+      const questionData = questionsData[i];
+      
+      try {
         const factCheck = await perplexityService.factCheck(questionData.question);
-        console.log(`Fact-check result for question ${index + 1}:`, factCheck);
-        return {
+        const parsedValue = parseAnswer(factCheck.answer);
+        
+        questionsWithAnswers.push({
           id: uuidv4(),
           question: questionData.question,
           category: questionData.category,
-          actualValue: parseAnswer(factCheck.answer),
+          actualValue: parsedValue,
           sources: factCheck.sources,
-          confidence: factCheck.confidence
-        };
-      })
-    );
+          confidence: factCheck.confidence,
+          expectedDataType: questionData.expectedDataType || 'number',
+          sliderConfig: questionData.sliderConfig || {
+            min: 0,
+            max: 100,
+            step: 1,
+            unit: '',
+            labels: { min: '0', max: '100' }
+          }
+        });
+      } catch (error) {
+        console.error(`ERROR fact-checking question ${i + 1}:`, error);
+        // Continue with other questions even if one fails
+        questionsWithAnswers.push({
+          id: uuidv4(),
+          question: questionData.question,
+          category: questionData.category,
+          actualValue: 1, // Default value
+          sources: [{ name: "Error", url: "N/A" }],
+          confidence: "low",
+          expectedDataType: questionData.expectedDataType || 'number',
+          sliderConfig: questionData.sliderConfig || {
+            min: 0,
+            max: 100,
+            step: 1,
+            unit: '',
+            labels: { min: '0', max: '100' }
+          }
+        });
+      }
+    }
 
     // Create quiz data
     const quizLinkId = uuidv4();
@@ -72,10 +107,13 @@ router.post('/generate', async (req, res) => {
     };
 
     // Save to CSV
-    console.log('Saving quiz to CSV...');
-    await csvStorage.saveQuiz(quizData);
-    console.log('Quiz saved successfully');
-
+    try {
+      await csvStorage.saveQuiz(quizData);
+      console.log('Quiz saved successfully with ID:', quizLinkId);
+    } catch (error) {
+      console.error('ERROR saving quiz to CSV:', error);
+      throw new Error(`Failed to save quiz: ${error.message}`);
+    }
     res.json({
       quizLinkId,
       topicName: topic,
@@ -84,7 +122,6 @@ router.post('/generate', async (req, res) => {
     });
   } catch (error) {
     console.error('Error generating quiz:', error);
-    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to generate quiz', details: error.message });
   }
 });

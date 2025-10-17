@@ -1,5 +1,16 @@
 const API_BASE_URL = 'http://localhost:3001/api'
 
+export interface SliderConfig {
+  min: number
+  max: number
+  step: number
+  unit: string
+  labels: {
+    min: string
+    max: string
+  }
+}
+
 export interface Question {
   id: string
   question: string
@@ -7,6 +18,8 @@ export interface Question {
   actualValue: number
   sources: Array<{ name: string; url: string }>
   confidence: string
+  expectedDataType: string
+  sliderConfig: SliderConfig
 }
 
 export interface Quiz {

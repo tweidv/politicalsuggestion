@@ -1,4 +1,5 @@
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 const csv = require('csv-parser');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
@@ -13,16 +14,16 @@ class CSVStorage {
 
   async ensureDataDirectory() {
     try {
-      await fs.access(this.dataDir);
+      await fsPromises.access(this.dataDir);
     } catch {
-      await fs.mkdir(this.dataDir, { recursive: true });
+      await fsPromises.mkdir(this.dataDir, { recursive: true });
     }
   }
 
   async initializeFiles() {
     // Initialize quizzes.csv if it doesn't exist
     try {
-      await fs.access(this.quizzesFile);
+      await fsPromises.access(this.quizzesFile);
     } catch {
       const csvWriter = createCsvWriter({
         path: this.quizzesFile,
@@ -39,7 +40,7 @@ class CSVStorage {
 
     // Initialize results.csv if it doesn't exist
     try {
-      await fs.access(this.resultsFile);
+      await fsPromises.access(this.resultsFile);
     } catch {
       const csvWriter = createCsvWriter({
         path: this.resultsFile,
@@ -57,7 +58,7 @@ class CSVStorage {
 
     // Initialize sessions.csv if it doesn't exist
     try {
-      await fs.access(this.sessionsFile);
+      await fsPromises.access(this.sessionsFile);
     } catch {
       const csvWriter = createCsvWriter({
         path: this.sessionsFile,
